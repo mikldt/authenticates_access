@@ -94,6 +94,19 @@ module AuthenticatesAccess
 
       @save_method_list.add_method(options)      
     end
+
+    # Used to require that an authentication test is passed on the accessor
+    # before data may be read from the model.
+    def authenticates_reads(options={})
+      unless @read_method_list
+        authenticates_access
+        #Sadly, no easy way to block reads at this level
+        @read_method_list = AuthMethodList.new
+      end
+
+      @read_method_list.add_method(options)
+    end
+
     
     # Used to specify that a given attribute should only be written to if the
     # accessor passes a test. The test may be a method of the accessor or
@@ -115,6 +128,15 @@ module AuthenticatesAccess
       @write_validation_map ||= {}
       @write_validation_map[attr.to_s] ||= AuthMethodList.new
       @write_validation_map[attr.to_s].add_method(options)
+    end
+
+    # Used to specify that a given attribute may only be read if the
+    # accessor passes a test.  Behaves similarly to authenticates_writes_to
+    def authenticates_reads_from(attr, options={})
+      authenticates_access
+      @read_validation_map ||= {}
+      @read_validation_map[attr.to_s] ||= AuthMethodList.new
+      @read_validation_map[attr.to_s].add_method(options)
     end
 
     # You might use this one to only allow authenticated users to create objects
@@ -199,6 +221,11 @@ module AuthenticatesAccess
       @save_method_list
     end
 
+    def authenticates_reads_method_list
+      @read_method_list ||= nil
+      @read_method_list
+    end
+
     def write_validations(attr)
       @write_validation_map ||= nil
       if @write_validation_map
@@ -233,7 +260,6 @@ module AuthenticatesAccess
     end
 
 
-
     # before_save/before_destroy hook installed by authenticates_saves
     def auth_save_filter
       if not allowed_to_save
@@ -247,6 +273,15 @@ module AuthenticatesAccess
     # before_save/before_destroy hook installed by authenticates_saves
     def auth_create_filter
       if not self.class.allowed_to_create
+        false
+      else
+        true
+      end
+    end
+    # Included for completeness, this could be used to filter out accessors
+    # who can't read an object. Sadly, there's no way to install this, yet.
+    def auth_read_filter
+      if not allowed_to_read
         false
       else
         true
@@ -269,6 +304,23 @@ module AuthenticatesAccess
       end
     end
 
+    # This method may be used to determine whether the current accessor has
+    # privileges to read data from the object. Returns true if so, else false.
+    def allowed_to_read
+      method_list = self.class.authenticates_reads_method_list
+      if method_list.nil?
+        # No method list, so it's allowed
+        true
+      elsif read_method_list.check :accessor => accessor, :model => self
+        true
+        # Method list passed, so allowed
+        true
+      else
+        # Method list failed, so denied
+        false
+      end
+    end
+
     # Overload of write_attribute to implement the filtration
     def write_attribute(name, value)
       # Simply check if the accessor is allowed to write the field
@@ -278,7 +330,15 @@ module AuthenticatesAccess
         super(name, value)
       end
     end
-    
+
+    # Overload of read_attribute to filter data access
+    def read_attribute(name)
+      @bypass_auth ||= false
+      if allowed_to_read(name) || @bypass_auth
+        super(name)
+      end
+    end
+
     # This method may be used to determine if the current accessor may write
     # to a given attribute. Returns true if so, false otherwise.
     def allowed_to_write(name)
