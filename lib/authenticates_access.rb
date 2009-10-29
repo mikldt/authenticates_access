@@ -234,6 +234,16 @@ module AuthenticatesAccess
         nil
       end
     end
+
+    def read_validations(attr)
+      @read_validation_map ||= nil
+      if @read_validation_map
+        @read_validation_map[attr]
+      else
+        nil
+      end
+    end
+   
   end
 
   module InstanceMethods
@@ -334,7 +344,7 @@ module AuthenticatesAccess
     # Overload of read_attribute to filter data access
     def read_attribute(name)
       @bypass_auth ||= false
-      if allowed_to_read(name) || @bypass_auth
+      if allowed_to_read_from(name) || @bypass_auth
         super(name)
       end
     end
@@ -361,6 +371,31 @@ module AuthenticatesAccess
       end
     end
 
+    # This method may be used to determine if the current accessor may read
+    # a given attribute. Returns true if so, false otherwise.
+    def allowed_to_read_from(name)
+      # no point allowing attribute writes if we can't save them?
+      if allowed_to_read
+        name = name.to_s
+        validation_methods = self.class.read_validations(name)  
+        if validation_methods.nil?
+          # We haven't registered any filters on this attribute, so allow the write.
+          true
+        elsif validation_methods.check :accessor => accessor, :model => self
+          # One of the authentication methods worked, so allow the write.
+          true
+        else
+          # We had filters but none of them passed. Disallow write.
+          false
+        end
+      else
+        false
+      end
+    end
+
+
+    # This method may be used to determine if the current accessor may write
+    # to a given attribute. Returns true if so, false otherwise.
     # for now, if you can save, you can destroy
     def allowed_to_destroy      
       allowed_to_save
