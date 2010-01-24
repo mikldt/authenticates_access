@@ -321,8 +321,7 @@ module AuthenticatesAccess
       if method_list.nil?
         # No method list, so it's allowed
         true
-      elsif read_method_list.check :accessor => accessor, :model => self
-        true
+      elsif method_list.check :accessor => accessor, :model => self
         # Method list passed, so allowed
         true
       else
