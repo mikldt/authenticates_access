@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mikldt-authenticates_access}
-  s.version = "0.1.0"
+  s.version = "0.1.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael DiTore"]
@@ -21,10 +21,10 @@ Gem::Specification.new do |s|
      "README",
      "Rakefile",
      "VERSION",
-     "init.rb",
      "install.rb",
      "lib/authenticates_access.rb",
      "mikldt-authenticates_access.gemspec",
+     "rails/init.rb",
      "tasks/authenticates_access_tasks.rake",
      "test/admin_item.rb",
      "test/authenticates_access_test.rb",
