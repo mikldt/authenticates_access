@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
      "init.rb",
      "install.rb",
      "lib/authenticates_access.rb",
+     "mikldt-authenticates_access.gemspec",
      "tasks/authenticates_access_tasks.rake",
      "test/admin_item.rb",
      "test/authenticates_access_test.rb",
