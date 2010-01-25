@@ -272,7 +272,8 @@ module AuthenticatesAccess
 
     # before_save/before_destroy hook installed by authenticates_saves
     def auth_save_filter
-      if not allowed_to_save
+      @bypass_auth ||= false
+      if not (allowed_to_save || @bypass_auth)
         # An interesting thought: could this throw an HTTP error?
         false
       else
