@@ -211,6 +211,7 @@ module AuthenticatesAccess
     def autosets_owner_on_create
       has_owner # this will do nothing if the user has already set up has_owner :something
       # the hook runs before validation so we can validate_associated
+      authenticates_access
       before_validation_on_create :autoset_owner
     end
 
