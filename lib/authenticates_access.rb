@@ -19,7 +19,6 @@ module AuthenticatesAccess
       # start out assuming we have not passed any tests
       # if one passes this gets set to true
       passed = false
-
       self.each do |method|
         unless targets[method.type].nil?
           target = targets[method.type]
@@ -293,7 +292,7 @@ module AuthenticatesAccess
     # Included for completeness, this could be used to filter out accessors
     # who can't read an object. Sadly, there's no way to install this, yet.
     def auth_read_filter
-      if not (allowed_to_read || @bypass_auth)
+      if not (@bypass_auth || allowed_to_read)
         false
       else
         true
@@ -345,7 +344,7 @@ module AuthenticatesAccess
     # Overload of read_attribute to filter data access
     def read_attribute(name)
       @bypass_auth ||= false
-      if allowed_to_read_from(name) || @bypass_auth
+      if @bypass_auth || allowed_to_read_from(name)
         super(name)
       end
     end
