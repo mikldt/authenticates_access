@@ -283,7 +283,8 @@ module AuthenticatesAccess
     
     # before_save/before_destroy hook installed by authenticates_saves
     def auth_create_filter
-      if not self.class.allowed_to_create
+      @bypass_auth ||= false
+      if not (self.class.allowed_to_create || @bypass_auth)
         false
       else
         true
@@ -292,7 +293,7 @@ module AuthenticatesAccess
     # Included for completeness, this could be used to filter out accessors
     # who can't read an object. Sadly, there's no way to install this, yet.
     def auth_read_filter
-      if not allowed_to_read
+      if not (allowed_to_read || @bypass_auth)
         false
       else
         true
