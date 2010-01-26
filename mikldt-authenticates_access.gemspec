@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mikldt-authenticates_access}
-  s.version = "0.1.2"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael DiTore"]
@@ -44,10 +44,10 @@ Gem::Specification.new do |s|
   s.summary = %q{Model-based Authorization on Rails!}
   s.test_files = [
     "test/authenticates_access_test.rb",
-     "test/user.rb",
      "test/test_helper.rb",
      "test/owned_item.rb",
-     "test/admin_item.rb"
+     "test/admin_item.rb",
+     "test/user.rb"
   ]
 
   if s.respond_to? :specification_version then
