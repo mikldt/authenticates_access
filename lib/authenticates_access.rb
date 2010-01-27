@@ -67,6 +67,11 @@ module AuthenticatesAccess
       include InstanceMethods
     end
 
+    # Include the instance methods used to implement authentication
+    def authenticates_access_with_reads
+      include ReadInstanceMethods
+    end
+
     # Used to require an authentication test to be passed on the accessor
     # before the model may be saved or destroyed. If the test fails, an exception
     # will be thrown. Multiple calls build a chain of tests. If any test
@@ -99,6 +104,7 @@ module AuthenticatesAccess
     def authenticates_reads(options={})
       unless @read_method_list
         authenticates_access
+        authenticates_access_with_reads
         #Sadly, no easy way to block reads at this level
         @read_method_list = AuthMethodList.new
       end
@@ -132,7 +138,7 @@ module AuthenticatesAccess
     # Used to specify that a given attribute may only be read if the
     # accessor passes a test.  Behaves similarly to authenticates_writes_to
     def authenticates_reads_from(attr, options={})
-      authenticates_access
+      authenticates_access_with_reads
       @read_validation_map ||= {}
       @read_validation_map[attr.to_s] ||= AuthMethodList.new
       @read_validation_map[attr.to_s].add_method(options)
@@ -342,14 +348,6 @@ module AuthenticatesAccess
       end
     end
 
-    # Overload of read_attribute to filter data access
-    def read_attribute(name)
-      @bypass_auth ||= false
-      if @bypass_auth || allowed_to_read_from(name)
-        super(name)
-      end
-    end
-
     # This method may be used to determine if the current accessor may write
     # to a given attribute. Returns true if so, false otherwise.
     def allowed_to_write(name)
@@ -400,6 +398,16 @@ module AuthenticatesAccess
     # for now, if you can save, you can destroy
     def allowed_to_destroy      
       allowed_to_save
+    end
+  end
+
+  module ReadInstanceMethods
+     # Overload of read_attribute to filter data access
+    def read_attribute(name)
+      @bypass_auth ||= false
+      if @bypass_auth || allowed_to_read_from(name)
+        super(name)
+      end
     end
   end
 
