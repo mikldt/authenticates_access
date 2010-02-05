@@ -259,9 +259,10 @@ module AuthenticatesAccess
     end
 
     def bypass_auth
+      old_bypass_auth = @bypass_auth || false
       @bypass_auth = true
       yield
-      @bypass_auth = false
+      @bypass_auth = old_bypass_auth
     end
 
     # Auto-set the owner id to the accessor id before save if the object is new
