@@ -92,14 +92,24 @@ module AuthenticatesAccess
       unless @save_method_list
         authenticates_access
         before_save :auth_save_filter
-        before_destroy :auth_save_filter
+        before_destroy :auth_delete_filter
         @save_method_list = AuthMethodList.new
       end
 
       @save_method_list.add_method(options)      
     end
 
-    # Used to require that an authentication test is passed on the accessor
+    def authenticates_deletes(options={})
+      unless @delete_method_list
+        authenticates_access
+        before_destroy :auth_delete_filter
+        @delete_method_list = AuthMethodList.new
+      end
+
+      @delete_method_list.add_method(options)      
+    end
+
+   # Used to require that an authentication test is passed on the accessor
     # before data may be read from the model.
     def authenticates_reads(options={})
       unless @read_method_list
@@ -227,6 +237,11 @@ module AuthenticatesAccess
       @save_method_list
     end
 
+    def authenticates_deletes_method_list
+      @delete_method_list ||= nil
+      @delete_method_list
+    end
+
     def authenticates_reads_method_list
       @read_method_list ||= nil
       @read_method_list
@@ -276,8 +291,7 @@ module AuthenticatesAccess
       true # this is very important!
     end
 
-
-    # before_save/before_destroy hook installed by authenticates_saves
+    # before_save hook installed by authenticates_saves
     def auth_save_filter
       @bypass_auth ||= false
       if not (allowed_to_save || @bypass_auth)
@@ -288,6 +302,17 @@ module AuthenticatesAccess
       end
     end
     
+    # before_delete hook installed by authenticates_saves or _deletes
+    def auth_delete_filter
+      @bypass_auth ||= false
+      if not (allowed_to_delete || @bypass_auth)
+        # An interesting thought: could this throw an HTTP error?
+        false
+      else
+        true
+      end
+    end
+
     # before_save/before_destroy hook installed by authenticates_saves
     def auth_create_filter
       @bypass_auth ||= false
@@ -297,6 +322,7 @@ module AuthenticatesAccess
         true
       end
     end
+
     # Included for completeness, this could be used to filter out accessors
     # who can't read an object. Sadly, there's no way to install this, yet.
     def auth_read_filter
@@ -311,6 +337,27 @@ module AuthenticatesAccess
     # privileges to save the object. Returns true if so, false otherwise.
     def allowed_to_save
       method_list = self.class.authenticates_saves_method_list
+      if method_list.nil?
+        # No method list, so it's allowed
+        true
+      elsif method_list.check :accessor => accessor, :model => self
+        # Method list passed, so allowed
+        true
+      else
+        # Method list failed, so denied
+        false
+      end
+    end
+
+    # Determines whether the current accessor has privileges to destroy the 
+    # object. Returns true if so.
+    def allowed_to_delete
+      if not allowed_to_save
+        # Not allowed to save, so definitely not allowed to delete.
+        return false
+      end
+
+      method_list = self.class.authenticates_deletes_method_list
       if method_list.nil?
         # No method list, so it's allowed
         true
