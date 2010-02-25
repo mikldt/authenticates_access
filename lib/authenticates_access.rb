@@ -1,4 +1,5 @@
 # AuthenticatesAccess
+require 'active_record'
 
 module AuthenticatesAccess
   class AuthMethod < Struct.new(:type, :name, :options)
@@ -496,3 +497,9 @@ module AuthenticatesAccess
 
 end
 
+# Rails 3 compatability
+if defined? Rails
+  ActiveRecord::Base.class_eval do
+    extend AuthenticatesAccess::ClassMethods
+  end
+end
